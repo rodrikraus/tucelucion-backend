@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Modificar compra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: adminNavbar}"></div>
+    <div class="container mt-5">
+        <h4 class="text-center">Actualizar compra</h4>
+        <hr>
+        <form action="/compras/guardarModificacionCompra" method="post" th:object="${compra}">
+            <input type="hidden" th:field="*{id}" />
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="text" class="form-control" id="email" th:field="*{email}" required>
+            </div>
+
+            <div class="mb-3">
+                <h4>Items</h4>
+                <div th:each="item, itemStat : *{items}">
+                    <input type="hidden" th:field="*{items[__${itemStat.index}__].id}" />
+                    <input type="hidden" th:field="*{items[__${itemStat.index}__].product.id}" />
+                    <div class="row mb-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Producto</label>
+                            <p th:text="${item.product.name}"></p>
+                        </div>
+                        <div class="col-md-2">
+                            <label th:for="${'itemQuantity' + itemStat.index}" class="form-label">Cantidad</label>
+                            <input type="number" th:field="*{items[__${itemStat.index}__].quantity}" class="form-control" th:id="${'itemQuantity' + itemStat.index}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Precio unitario</label>
+                            <p th:text="${item.unitPrice}"></p>
+                        </div>
+                        <div class="col-md-2">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="totalAmount" class="form-label">Total</label>
+                <input type="number" step="0.01" class="form-control" id="totalAmount" th:field="*{totalAmount}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="shippingAddress" class="form-label">Dirección</label>
+                <input type="text" class="form-control" id="shippingAddress" th:field="*{shippingAddress}" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="numeroCelular" class="form-label">Número de WhatsApp</label>
+                <input type="text" class="form-control" id="numeroCelular" th:field="*{numeroCelular}" required>
+            </div>
+
+            <!-- Estado de la compra -->
+            <div class="mb-3">
+                <label>Estado</label>
+                <span id="estadoDisplay" class="badge bg-secondary" th:text="*{estado}">PENDIENTE</span>
+            </div>
+
+            <input type="hidden" th:field="*{estado}" id="estado">
+            <div class="text-center mb-4">
+                <button type="button" class="btn btn-danger me-2"
+                        onclick="setEstado('CANCELADO')">Marcar como cancelada</button>
+
+                <button type="button" class="btn btn-warning me-2"
+                        onclick="setEstado('PENDIENTE')">Marcar como pendiente</button>
+                <button type="button" class="btn btn-success"
+                        onclick="setEstado('ENTREGADO')">Marcar como entregada</button>
+            </div>
+
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">Actualizar</button>
+                <a href="/compras" class="btn btn-secondary ms-2">Cancelar</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+    function setEstado(estado) {
+        document.getElementById('estado').value = estado;
+
+        // Update visible label
+        const display = document.getElementById('estadoDisplay');
+        display.textContent = estado;
+
+        // Change badge color based on estado
+        display.className = 'badge'; // reset
+        if (estado === 'PENDIENTE') {
+            display.classList.add('bg-warning', 'text-dark');
+        } else if (estado === 'CANCELADO') {
+            display.classList.add('bg-danger');
+        } else if (estado === 'ENTREGADO') {
+            display.classList.add('bg-success');
+        } else {
+            display.classList.add('bg-secondary');
+        }
+    }
+    </script>
+
+
+</body>
+</html>

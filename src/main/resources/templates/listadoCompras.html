@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <title>Listado de Compras</title>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: adminNavbar}"></div>
+<div class="container">
+    <h4 class="text-center mt-2">LISTADO DE COMPRAS</h4>
+    <hr>
+
+    <div class="mb-3">
+        <input type="text" id="searchComprasBar" class="form-control" placeholder="Buscar en compras (ID, Email, Fecha, Total, Dirección)...">
+    </div>
+    
+    <table class="table">
+        <thead class="table-light">
+        <tr class="table-info">
+            <th scope="col" data-column="0" style="cursor: pointer;">ID</th>
+            <th scope="col" data-column="1" style="cursor: pointer;">Email</th>
+            <th scope="col" data-column="2" style="cursor: pointer;">Fecha</th>
+            <th scope="col" data-column="3" style="cursor: pointer;">Total</th>
+            <th scope="col" data-column="4" style="cursor: pointer;">Dirección</th>
+            <th scope="col"style="cursor: pointer;">WhatsApp</th>
+            <th scope="col"style="cursor: pointer;">Estado</th>
+            <th scope="col">Ítems</th>
+            <th scope="col"></th> <!-- Columna vacía para el botón de modificar -->
+            <th scope="col"></th> <!-- Columna vacía para el botón de borrar -->
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="compra : ${compras}" class="align-middle">
+            <td th:text="${compra.id}"></td>
+            <td th:text="${compra.email}"></td>
+            <td th:text="${#temporals.format(compra.fechaCompra, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="'$'+${compra.totalAmount}"></td>
+            <td th:text="${compra.shippingAddress}"></td>
+            <td>
+            <a th:href="'https://wa.me/' + ${#strings.replace(compra.numeroCelular, '[^\\d]', '')}" target="_blank" 
+                th:text="${compra.numeroCelular}"></a>
+            </td>
+            <td>
+            <span th:switch="${compra.estado}">
+                <span th:case="'ENTREGADO'" class="badge bg-success" th:text="${compra.estado}"></span>
+                <span th:case="'PENDIENTE'" class="badge bg-warning text-dark" th:text="${compra.estado}"></span>
+                <span th:case="'CANCELADO'" class="badge bg-danger" th:text="${compra.estado}"></span>
+            </span>
+            </td>
+
+            <td>
+                <ul>
+                    <li th:each="item : ${compra.items}">
+                        <span th:text="${item.product.name}"></span>
+                        <span th:text="'$'+${item.unitPrice}"></span>
+                        x
+                        <span th:text="${item.quantity} + ' unidades'"></span>
+                        =
+                        <span th:text="'$' + ${item.unitPrice}*${item.quantity}"></span>
+                    </li>
+                </ul>
+            </td>
+                        <td>
+                <a class="btn btn-success" th:href="@{/compras/modificarCompra/{id}(id=${compra.id})}" role="button">Modificar</a>
+            </td>
+            <td>
+                <a class="btn btn-danger" th:href="@{/compras/borrar/{id}(id=${compra.id})}" onclick="return confirmarBorrado()" role="button">Borrar</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" id="prevPage">
+                <a class="page-link" href="#" tabindex="-1">Anterior</a>
+            </li>
+            <li class="page-item"><span class="page-link" id="currentPageInfo">Página 1</span></li>
+            <li class="page-item" id="nextPage">
+                <a class="page-link" href="#">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div th:if="${compras == null or compras.empty}">
+        La lista de compras está vacía.
+    </div>
+</div>
+
+<script>
+    function confirmarBorrado() {
+        return confirm('¿Estás seguro que deseas borrar esta compra?');
+    }
+    // Helper function to parse date strings in 'dd/MM/yyyy HH:mm' format
+    function parseDate(dateStr) {
+        const parts = dateStr.split(' ');
+    const dateParts = parts[0].split('/'); // Should be [dd, MM, yyyy]
+    let hours = 0, minutes = 0;
+
+    if (parts.length > 1 && parts[1].includes(':')) {
+        const timeParts = parts[1].split(':');
+        hours = parseInt(timeParts[0], 10);
+        minutes = parseInt(timeParts[1], 10);
+    }
+
+    // Ensure parts are valid numbers before passing to Date constructor
+    const day = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10) - 1; // Month is 0-indexed
+    const year = parseInt(dateParts[2], 10);
+
+    if (isNaN(day) || isNaN(month) || isNaN(year) || isNaN(hours) || isNaN(minutes)) {
+        console.error("Invalid date string passed to parseDate:", dateStr);
+        return new Date(0); // Return epoch or some other default for invalid dates
+    }
+
+    return new Date(year, month, day, hours, minutes);
+    }
+
+    const table = document.querySelector('.table');
+    // Query for headers with data-column attribute
+    const headers = table.querySelectorAll('thead th[data-column]');
+    const tbody = table.querySelector('tbody');
+    const originalTableRows = Array.from(tbody.querySelectorAll('tr')); // Store original rows
+    let currentSortColumn = -1;
+    let sortDirections = Array(headers.length).fill('asc');
+    const upArrow = " ↑";
+    const downArrow = " ↓";
+
+    const itemsPerPage = 20;
+    let currentPage = 1;
+    let currentRows = []; // This will hold the array of <tr> elements to be paginated
+
+    function displayPage(pageNumber) {
+        currentPage = pageNumber;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        tbody.innerHTML = ''; // Clear current table body
+
+        const pageRows = currentRows.slice(startIndex, endIndex);
+        pageRows.forEach(row => {
+            tbody.appendChild(row); // Append the actual row object (these are from currentRows)
+        });
+
+        document.getElementById('currentPageInfo').textContent = `Página ${currentPage}`;
+        const prevPageLi = document.getElementById('prevPage');
+        const nextPageLi = document.getElementById('nextPage');
+        
+        prevPageLi.classList.toggle('disabled', currentPage === 1);
+
+        const totalPages = Math.ceil(currentRows.length / itemsPerPage);
+        nextPageLi.classList.toggle('disabled', currentPage === totalPages || totalPages === 0);
+
+        const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+        if (paginationNav) { // Ensure paginationNav exists
+            if (totalPages <= 1) {
+                paginationNav.style.display = 'none';
+            } else {
+                paginationNav.style.display = '';
+            }
+        }
+    }
+
+    function applySort(column, keepDirection = false) {
+        if (!keepDirection) {
+            if (currentSortColumn === column) {
+                sortDirections[column] = sortDirections[column] === 'asc' ? 'desc' : 'asc';
+            } else {
+                // Optional: reset previous sort direction if changing column
+                // if (currentSortColumn !== -1 && sortDirections[currentSortColumn] !== undefined) {
+                //    sortDirections[currentSortColumn] = 'asc'; 
+                // }
+                currentSortColumn = column;
+                sortDirections[column] = 'asc'; // Default to ascending for new column
+            }
+        }
+
+        const direction = sortDirections[column] === 'asc' ? 1 : -1;
+        
+        currentRows.sort((a, b) => {
+            const aVal = a.cells[column].textContent;
+            const bVal = b.cells[column].textContent;
+            switch (column) {
+                case 0: // ID
+                    return (parseFloat(aVal) - parseFloat(bVal)) * direction;
+                case 3: // Total
+                    const aTotal = parseFloat(aVal.replace('$', ''));
+                    const bTotal = parseFloat(bVal.replace('$', ''));
+                    return (aTotal - bTotal) * direction;
+                case 1: case 4: // Email, Dirección
+                    return aVal.localeCompare(bVal) * direction;
+                case 2: // Fecha
+                    return (parseDate(aVal) - parseDate(bVal)) * direction;
+                default: return 0;
+            }
+        });
+
+        displayPage(1); // Display the first page of the sorted data
+
+        headers.forEach(th => {
+            let headerText = th.textContent.replace(upArrow, '').replace(downArrow, '');
+            if (parseInt(th.dataset.column) === currentSortColumn) {
+                headerText += sortDirections[currentSortColumn] === 'asc' ? upArrow : downArrow;
+            }
+            th.textContent = headerText;
+        });
+    }
+
+    headers.forEach((header) => {
+        header.addEventListener('click', () => {
+            const column = parseInt(header.dataset.column);
+            applySort(column);
+        });
+    });
+
+    // Default sort by date on page load (descending)
+    document.addEventListener('DOMContentLoaded', function() {
+        // originalTableRows is defined from tbody here.
+        // const originalTableRows = Array.from(tbody.querySelectorAll('tr')); // This line is already present earlier in the script
+        
+        currentRows = [...originalTableRows]; // Initialize currentRows using spread operator on originalTableRows
+
+        applySort(2); 
+        applySort(2); 
+
+        if(currentRows.length === 0 && originalTableRows.length === 0) { // Only show if initially empty from server
+            // The Thymeleaf th:if handles the "lista vacia" message from server.
+            // This JS part is more for client-side filtering resulting in empty.
+            // Let's ensure pagination is hidden if table is truly empty from start.
+            const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+            if(paginationNav) paginationNav.style.display = 'none';
+            // Optional: if you want a JS-driven message when server sends empty list and Thymeleaf doesn't render.
+            // But the th:if should cover it.
+            // tbody.innerHTML = '<tr><td colspan="8">La lista de compras está vacía.</td></tr>';
+        } else if (currentRows.length === 0 && originalTableRows.length > 0) {
+            // This case means initial load had items, but default sort somehow emptied it (unlikely here)
+            // or more relevantly, if a filter on load feature were added.
+            // For now, displayPage(1) handles empty currentRows by hiding pagination.
+        }
+    });
+
+    // Search functionality
+    const searchBar = document.getElementById('searchComprasBar');
+    searchBar.addEventListener('keyup', function() {
+        const searchTerm = searchBar.value.toLowerCase();
+        
+        const filteredResultRows = originalTableRows.filter(row => {
+            const idText = row.cells[0].textContent.toLowerCase();
+            const emailText = row.cells[1].textContent.toLowerCase(); 
+            const fechaText = row.cells[2].textContent.toLowerCase();
+            const totalText = row.cells[3].textContent.toLowerCase();
+            const direccionText = row.cells[4].textContent.toLowerCase();
+            const itemsContent = row.cells[5].textContent.toLowerCase();
+            
+            const match = idText.includes(searchTerm) ||
+                   emailText.includes(searchTerm) ||
+                   fechaText.includes(searchTerm) ||
+                   totalText.includes(searchTerm) ||
+                   direccionText.includes(searchTerm) ||
+                   itemsContent.includes(searchTerm);
+            return match; 
+        });
+
+        currentRows = filteredResultRows;
+
+        if (currentSortColumn !== -1) {
+            applySort(currentSortColumn, true); 
+        } else {
+            displayPage(1); 
+        }
+
+        if (currentRows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8">No se encontraron resultados que coincidan con la búsqueda.</td></tr>';
+            const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+            if (paginationNav) paginationNav.style.display = 'none';
+        }
+    });
+
+    document.getElementById('prevPage').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            displayPage(currentPage - 1);
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            displayPage(currentPage + 1);
+        }
+    });
+</script>
+</body>
+</html>

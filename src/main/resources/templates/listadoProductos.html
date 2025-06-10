@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <title>Listado de productos</title>
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: adminNavbar}"></div>
+<div class="container">
+    <h4 class="text-center mt-2">LISTADO PRODUCTOS</h4>
+    <hr>
+    <!-- Botón para agregar producto -->
+    <div class="col-lg-3">
+        <a class="btn btn-primary" th:href="@{/productos/agregarProducto}" role="button">Agregar producto</a>
+    </div>
+    <input type="text" id="searchBar" placeholder="Buscar productos..." class="form-control my-3">
+    <table class="table">
+        <thead class="table-light">
+        <tr class="table-info">
+            <th scope="col" data-column="0" style="cursor: pointer;">ID</th>
+            <th scope="col" data-column="1" style="cursor: pointer;">Nombre</th>
+            <th scope="col" data-column="2" style="cursor: pointer;">Precio</th>
+            <th scope="col" data-column="3" style="cursor: pointer;">Stock</th>
+            <th scope="col" data-column="4">Descripción</th>
+            <th scope="col">Url de imagen</th>
+            <th scope="col" data-column="6">Tags</th>
+            <th scope="col">Category</th>
+            <th scope="col"></th> <!-- Columna vacía para el botón de modificar -->
+            <th scope="col"></th> <!-- Columna vacía para el botón de borrar -->
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="producto : ${productos}" class="align-middle">
+            <td th:text="${producto.id}"></td>
+            <td th:text="${producto.name}"></td>
+            <td th:text="'$'+${producto.price}"></td>
+            <td th:text="${producto.stock}"></td>
+            <td th:text="${producto.description}"></td>
+            <td><img th:src="${producto.imageUrl}" alt="Imagen del producto" width="150"></td>
+            <td th:text="${producto.tags}"></td>
+            <td th:text="${producto.productCategory}"></td>
+            <td>
+                <a class="btn btn-success" th:href="@{/productos/modificarProducto/{id}(id=${producto.id})}" role="button">Modificar</a>
+            </td>
+            <td>
+                <a class="btn btn-danger" th:href="@{/productos/borrar/{id}(id=${producto.id})}" onclick="return confirmarBorrado()" role="button">Borrar</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+    <nav aria-label="Page navigation">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" id="prevPage">
+                <a class="page-link" href="#" tabindex="-1">Anterior</a>
+            </li>
+            <li class="page-item"><span class="page-link" id="currentPageInfo">Página 1</span></li>
+            <li class="page-item" id="nextPage">
+                <a class="page-link" href="#">Siguiente</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div th:if="${productos == null or productos.empty}">
+        La lista de productos está vacía.
+    </div>
+</div>
+
+<script>
+    function confirmarBorrado() {
+        return confirm('¿Estás seguro que deseas borrar este producto?');
+    }
+
+    const searchBar = document.getElementById('searchBar');
+    const originalTableRows = Array.from(document.querySelectorAll('tbody tr')); // Store original rows
+    let displayedTableRows = [...originalTableRows]; // Rows currently displayed (can be filtered)
+
+    const itemsPerPage = 10; // Or 20, let's use 10 for products as an example, can be changed.
+    let currentPage = 1;
+    // We will use the existing 'displayedTableRows' as the source for pagination.
+
+    function displayPage(pageNumber) {
+        currentPage = pageNumber;
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+
+        tbody.innerHTML = ''; // Clear current table body to display the new page
+
+        // Slice from 'displayedTableRows' which contains the currently filtered and sorted rows
+        const pageRows = displayedTableRows.slice(startIndex, endIndex);
+        pageRows.forEach(row => {
+            tbody.appendChild(row); 
+        });
+
+        document.getElementById('currentPageInfo').textContent = `Página ${currentPage}`;
+        const prevPageLi = document.getElementById('prevPage');
+        const nextPageLi = document.getElementById('nextPage');
+        
+        prevPageLi.classList.toggle('disabled', currentPage === 1);
+
+        const totalPages = Math.ceil(displayedTableRows.length / itemsPerPage);
+        nextPageLi.classList.toggle('disabled', currentPage === totalPages || totalPages === 0);
+
+        const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+        if (paginationNav) {
+            if (totalPages <= 1) {
+                paginationNav.style.display = 'none';
+            } else {
+                paginationNav.style.display = '';
+            }
+        }
+    }
+
+    searchBar.addEventListener('keyup', function() {
+        const searchTerm = searchBar.value.toLowerCase();
+        // The existing logic correctly filters originalTableRows and updates displayedTableRows
+        // based on row.style.display. Let's refine it to directly populate displayedTableRows.
+        
+        displayedTableRows = originalTableRows.filter(function(row) {
+            const id = row.cells[0].textContent.toLowerCase();
+            const nombre = row.cells[1].textContent.toLowerCase();
+            // Price is cell 2, need to handle '$' if users search for "100" vs "$100"
+            const precioText = row.cells[2].textContent.toLowerCase(); // For text search, keep as is
+            const stock = row.cells[3].textContent.toLowerCase();
+            const desc = row.cells[4].textContent.toLowerCase();
+            // column 5 is image, 6 is tags, 7 is category
+            const tags = row.cells[6].textContent.toLowerCase();
+            const category = row.cells[7].textContent.toLowerCase();
+
+
+            const match = id.includes(searchTerm) || 
+                   nombre.includes(searchTerm) || 
+                   precioText.includes(searchTerm) || 
+                   stock.includes(searchTerm) || 
+                   desc.includes(searchTerm) ||
+                   tags.includes(searchTerm) ||
+                   category.includes(searchTerm);
+            // row.style.display = match ? "" : "none"; // displayPage will handle DOM attachment
+            return match;
+        });
+
+        if (currentSortColumn !== -1) {
+             applySort(currentSortColumn, true); // This sorts displayedTableRows and calls displayPage(1)
+        } else {
+            displayPage(1); // If no sort, just display page 1 of filtered results
+        }
+
+        if (displayedTableRows.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10">No se encontraron productos que coincidan con la búsqueda.</td></tr>';
+            const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+            if (paginationNav) paginationNav.style.display = 'none';
+        }
+    });
+
+    // Sorting implementation
+    const table = document.querySelector('.table');
+    const headers = table.querySelectorAll('thead th[data-column]');
+    const tbody = table.querySelector('tbody');
+    let currentSortColumn = -1;
+    // Initialize sortDirections based on the number of sortable columns
+    let sortDirections = Array(headers.length).fill('asc');
+    const upArrow = " ↑";
+    const downArrow = " ↓";
+
+    function applySort(column, keepDirection = false) {
+        // Update sort direction (existing logic for this part)
+        if (!keepDirection) {
+            if (currentSortColumn === column) {
+                sortDirections[column] = sortDirections[column] === 'asc' ? 'desc' : 'asc';
+            } else {
+                if (currentSortColumn !== -1 && sortDirections[currentSortColumn]) {
+                    // sortDirections[currentSortColumn] = 'asc'; // Optional reset
+                }
+                currentSortColumn = column;
+                sortDirections[column] = 'asc';
+            }
+        }
+
+        const direction = sortDirections[column] === 'asc' ? 1 : -1;
+        const isNumericColumn = column === 0 || column === 2 || column === 3; // ID, Precio, Stock
+
+        // Sort displayedTableRows
+        displayedTableRows.sort((a, b) => {
+            const aVal = a.cells[column].textContent;
+            const bVal = b.cells[column].textContent;
+
+            if (isNumericColumn) {
+                // Ensure '$' is removed for price before parsing if present. Cell 2 is price.
+                const valA = column === 2 ? aVal.replace('$', '') : aVal;
+                const valB = column === 2 ? bVal.replace('$', '') : bVal;
+                const numA = parseFloat(valA);
+                const numB = parseFloat(valB);
+                if (isNaN(numA) && isNaN(numB)) return 0;
+                if (isNaN(numA)) return 1 * direction;
+                if (isNaN(numB)) return -1 * direction;
+                return (numA - numB) * direction;
+            } else {
+                return aVal.localeCompare(bVal) * direction;
+            }
+        });
+
+        displayPage(1); // Display the first page of the sorted data
+
+        headers.forEach(th => {
+            let headerText = th.textContent.replace(upArrow, '').replace(downArrow, '');
+            // th.dataset.column is a string, currentSortColumn is a number.
+            if (parseInt(th.dataset.column) === currentSortColumn) {
+                 // Use currentSortColumn to access sortDirections, as it's the true index for the sorted column
+                headerText += sortDirections[currentSortColumn] === 'asc' ? upArrow : downArrow;
+            }
+            th.textContent = headerText;
+        });
+    }
+
+    headers.forEach((header) => {
+        header.addEventListener('click', () => {
+            const column = parseInt(header.dataset.column);
+            applySort(column);
+        });
+    });
+
+    // Default sort by ID (descending) on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        // displayedTableRows is initialized with [...originalTableRows]
+        // const originalTableRows = Array.from(document.querySelectorAll('tbody tr'));
+        // displayedTableRows = [...originalTableRows]; // This is already present in the existing script
+
+        applySort(0); 
+        applySort(0); 
+
+        // Handle case where table is initially empty from server
+        if(displayedTableRows.length === 0 && originalTableRows.length === 0) {
+            const paginationNav = document.querySelector('nav[aria-label="Page navigation"]');
+            if(paginationNav) paginationNav.style.display = 'none';
+            // The Thymeleaf th:if should show "La lista de productos está vacía."
+            // If tbody is empty and JS needs to write a message:
+            // tbody.innerHTML = '<tr><td colspan="10">La lista de productos está vacía.</td></tr>';
+        }
+    });
+
+    document.getElementById('prevPage').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            displayPage(currentPage - 1);
+        }
+    });
+
+    document.getElementById('nextPage').addEventListener('click', function(e) {
+        e.preventDefault();
+        if (!this.classList.contains('disabled')) {
+            displayPage(currentPage + 1);
+        }
+    });
+</script>
+</body>
+</html>

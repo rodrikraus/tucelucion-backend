@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Agregar producto</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div th:replace="~{fragments/navbar :: adminNavbar}"></div>
+<div class="container mt-4">
+    <h4 class="text-center">Agregar producto</h4>
+    <hr>
+
+    <form class="row g-3 needs-validation"
+          th:action="@{/productos/guardarProductoNuevo}"
+          method="post"
+          th:object="${nuevoProducto}">
+
+        <div class="col-md-6">
+            <label for="name" class="form-label">Nombre</label>
+            <input type="text" class="form-control" id="name" th:field="*{name}" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="price" class="form-label">Precio</label>
+            <input type="number" step="0.01" class="form-control" id="price" th:field="*{price}" required>
+        </div>
+
+        <div class="col-md-6">
+            <label for="stock" class="form-label">Stock</label>
+            <input type="number" class="form-control" id="stock" th:field="*{stock}" required>
+        </div>
+
+        <div class="col-md-12">
+            <label for="description" class="form-label">Descripción</label>
+            <textarea class="form-control" id="description" rows="3" th:field="*{description}"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label for="imageUrl" class="form-label">URL de la imagen</label>
+            <input type="text" class="form-control" id="imageUrl" th:field="*{imageUrl}">
+        </div>
+
+        <div class="col-md-12">
+            <label for="tags" class="form-label">Tags</label>
+            <textarea class="form-control" id="tags" rows="3" th:field="*{tags}"></textarea>
+        </div>
+
+        <div class="col-md-12">
+            <label for="productCategory" class="form-label">Category</label>
+            <input type="text" class="form-control" id="productCategory" th:field="*{productCategory}">
+        </div>
+
+
+        <div class="col-12">
+            <button class="btn btn-primary" type="submit">Agregar</button>
+        </div>
+    </form>
+</div>
+</body>
+</html>

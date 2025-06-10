@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Login</title>
+</head>
+<body>
+    <h1>Admin Login</h1>
+
+    <p th:if="${error}" th:text="${error}" style="color:red;"></p>
+    <p th:if="${error == null and param.error != null and #lists.contains(param.error, 'auth')}"
+       th:text="'You are not authorized to access the requested page. Please login as an admin.'"
+       style="color:red;"></p>
+
+    <form th:action="@{/login}" method="post">
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required autofocus/>
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required />
+        </div>
+        <div>
+            <button type="submit">Login</button>
+        </div>
+    </form>
+</body>
+</html>
