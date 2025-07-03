@@ -1,32 +1,32 @@
-# Use an official OpenJDK runtime as a parent image
+# Usa una imagen base oficial de OpenJDK
 FROM eclipse-temurin:17-jdk-jammy
 
-# Set the working directory in the container
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copy the Maven wrapper and POM file to download dependencies
+# Copia el wrapper de Maven y el POM
 COPY .mvn/ .mvn/
 COPY mvnw pom.xml ./
 
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B
-
-# Copy the application's source code
-COPY src ./src
-
-# Dar permisos de ejecución al wrapper de Maven
+# ✅ Da permisos de ejecución al wrapper de Maven
 RUN chmod +x mvnw
 
-# Build the application
+# Descarga las dependencias offline
+RUN ./mvnw dependency:go-offline -B
+
+# Copia el código fuente
+COPY src ./src
+
+# Compila la aplicación
 RUN ./mvnw package -DskipTests
 
-# Make port 8080 available to the world outside this container
+# Expone el puerto 8080
 EXPOSE 8080
 
-# Define environment variables for database connection (to be set in Render)
+# Variables de entorno (opcional, para Render)
 ENV DB_URL=your_db_url
 ENV DB_USERNAME=your_db_username
 ENV DB_PASSWORD=your_db_password
 
-# Run the JAR file 
-ENTRYPOINT ["java","-jar","/app/target/ecommerce-template-0.0.1-SNAPSHOT.jar"]
+# Ejecuta el archivo JAR
+ENTRYPOINT ["java","-jar","/app/]()
