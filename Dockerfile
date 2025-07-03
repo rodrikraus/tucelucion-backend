@@ -14,6 +14,9 @@ RUN ./mvnw dependency:go-offline -B
 # Copy the application's source code
 COPY src ./src
 
+# Dar permisos de ejecución al wrapper de Maven
+RUN chmod +x mvnw
+
 # Build the application
 RUN ./mvnw package -DskipTests
 
