@@ -1,6 +1,3 @@
 .git
 .gitignore
 target
-mvnw
-mvnw.cmd
-.mvn
