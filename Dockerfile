@@ -29,4 +29,4 @@ ENV DB_USERNAME=your_db_username
 ENV DB_PASSWORD=your_db_password
 
 # Ejecuta el archivo JAR
-ENTRYPOINT ["java","-jar","/app/]()
+ENTRYPOINT ["java","-jar","/app/target/ecommerce-template-0.0.1-SNAPSHOT.jar"]
