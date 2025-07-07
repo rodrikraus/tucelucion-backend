@@ -19,8 +19,11 @@ public class Product {
     private String name;
     private BigDecimal price;
     private Integer stock;
+    @Column(length = 1024)
     private String description;
+    @Column(length = 512)
     private String imageUrl;
+    @Column(length = 256)
     private String tags;
     private String productCategory;
 }
