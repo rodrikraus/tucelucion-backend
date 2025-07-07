@@ -10,7 +10,7 @@
     <div class="container mt-5">
         <h4 class="text-center">Actualizar producto</h4>
         <hr>
-        <form action="/productos/guardarModificacionProducto" method="post" th:object="${producto}">
+        <form id="productForm" action="/productos/guardarModificacionProducto" method="post" th:object="${producto}">
             <input type="hidden" th:field="*{id}" />
 
             <div class="mb-3">
@@ -55,5 +55,16 @@
             </div>
         </form>
     </div>
+    <script>
+        document.getElementById('productForm').addEventListener('submit', function(event) {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            const validExtensions = /\.(jpg|jpeg|png|gif|bmp|webp)$/i;
+
+            if (imageUrl && !validExtensions.test(imageUrl)) {
+                alert("La URL de la imagen debe terminar en .jpg, .jpeg, .png, .gif, .bmp o .webp");
+                event.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>
