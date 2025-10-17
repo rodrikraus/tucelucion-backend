@@ -1,6 +1,6 @@
 # E-Commerce Backend Application
 
-This is a **Spring Boot** backend application designed for the company **"TuCelucion"** e-commerce system. It includes REST APIs, database integration, server-side rendering with Thymeleaf, and containerization with Docker. The application is currently **deployed on Google Cloud** and integrates with **Supabase** as the backend database.
+This is a **Spring Boot** backend application designed for the company **"TuCelucion"** e-commerce system. It includes REST APIs, database integration, server-side rendering with Thymeleaf, and containerization with Docker. The application is currently **deployed on Google Cloud** and **Azure** and integrates with **Supabase** as the backend database.
 
 ## 📦 Core Technologies
 
