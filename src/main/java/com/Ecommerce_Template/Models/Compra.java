@@ -2,7 +2,6 @@ package com.Ecommerce_Template.Models;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,15 +22,14 @@ public class Compra {
     private String shippingAddress;
     private String numeroCelular;
     private String estado; // "PENDIENTE","ENTREGADO", "CANCELADO"
+    
+    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CompraItem> items;
 
     /* No hay autenticación de usuarios
     @ManyToOne
     @JoinColumn(name = "user_id")
     private User user;*/
-
-    
-    @OneToMany(mappedBy = "compra", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<CompraItem> items;
 
 
 }
