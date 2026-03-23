@@ -32,7 +32,7 @@ This is a **Spring Boot** backend application designed for the company **"TuCelu
 
 ### 🐳 Containerization & Deployment
 - **Docker** – Containerizes the application for easy deployment
-- **Google Cloud Run** – Current deployment platform
+- **Azure** – Current deployment platform
 - **Supabase** – PostgreSQL hosting and authentication
 
 ## 🧱 Project Structure
