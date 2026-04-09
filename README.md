@@ -69,4 +69,4 @@ cd your-project
 ```
 
 ## 🏁 Deployment
-This project is currently deployed on Google Cloud Run using a Docker container. It connects securely to a Supabase PostgreSQL instance for all database operations.
+This project is currently deployed on Azure and Google Cloud Run using a Docker container. It connects securely to a Supabase PostgreSQL instance for all database operations.
